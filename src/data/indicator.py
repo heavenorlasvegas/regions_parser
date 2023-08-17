@@ -29,7 +29,7 @@ class Indicator:
         index_of_row = matching_rows[matching_rows].index.tolist()
 
         if len(index_of_row) == 0:
-            raise ValueError("Name is not find. Russia Federation is not in dataframe.")
+            raise ValueError("Name is not found. Russian Federation is not in dataframe.")
         elif len(index_of_row) == 2:
             raise ValueError("Several rows with Russian Federation.")
         else:
@@ -45,38 +45,35 @@ class Indicator:
             position = index_of_row[0]
             replacements = {'1)': '', ';2)': '', ';3)': '', ';': ',', 'оквэд': 'ОКВЭД', ' снг': ' СНГ'}
 
+            nulls_before_data = first_column[:position].isnull().sum()
+
             if position >= 6:
                 self.section = self.process_string(first_column[1], replacements)
+                self.name = self.process_string(first_column[position-(3+nulls_before_data)], replacements) + ': ' + self.process_string(first_column[position-(2+nulls_before_data)], replacements)
+                self.unit = first_column[position-((1+nulls_before_data))].strip("()").replace(';', ',') + special_for_russia
+                try:
+                    self.code = ''.join([part.zfill(2) for part in re.match(r'^[\d.]+', first_column[position-(2+nulls_before_data)]).group().split('.')]).ljust(8,'0')
+                except AttributeError:
+                    self.code = ''.join([part.zfill(2) for part in re.match(r'^[\d.]+', first_column[position-3]).group().split('.')]).ljust(8,'0')  # в некоторых табличках первые строки дублируются и nulls_before_data считаеся неверно
 
-                self.name = self.process_string(first_column[position-4], replacements) + ': ' + \
-                            self.process_string(first_column[position-3], replacements)
-
-                self.unit = first_column[position-2].strip("()").replace(';', ',') + special_for_russia
-                self.code = ''.join([part.zfill(2) for part in re.match(r'^[\d.]+',
-                                                                        first_column[position-3]).group().split('.')]).ljust(8,
-                                                                                                                    '0')
             elif index_of_row[0] == 5:
                 self.section = self.process_string(first_column[1], replacements)
                 self.name = self.process_string(first_column[2], replacements)
                 self.unit = first_column[3].strip("()").replace(';', ',') + special_for_russia
-                self.code = ''.join([part.zfill(2) for part in re.match(r'^[\d.]+',
-                                                                        first_column[2]).group().split('.')]).ljust(8,
-                                                                                                                    '0')
+                self.code = ''.join([part.zfill(2) for part in re.match(r'^[\d.]+', first_column[2]).group().split('.')]).ljust(8,'0')
             elif index_of_row[0] == 4:
                 self.section = self.process_string(first_column[1], replacements)
-                self.name = self.lower_sentence(
-                    re.sub(r'^[\d.]+', '', first_column[2][:first_column[2].index(' на 10')].strip().replace('1)', '')))
+                self.name = self.lower_sentence(re.sub(r'^[\d.]+', '', first_column[2][:first_column[2].index(' на 10')].strip().replace('1)', '')))
                 self.unit = first_column[2][first_column[2].index(' на 10'):].strip().replace('1)', '') + special_for_russia
-                self.code = ''.join([part.zfill(2) for part in re.match(r'^[\d.]+',
-                                                                        first_column[2]).group().split('.')]).ljust(8,                                                                                                       '0')
+                self.code = ''.join([part.zfill(2) for part in re.match(r'^[\d.]+', first_column[2]).group().split('.')]).ljust(8,'0')
             else:
-                raise ValueError("Row index for Russian Federation is not rigth.")
+                raise ValueError("Row index for Russian Federation is not right.")
 
         return self.section, self.name, self.unit, self.code
 
     def lower_sentence(self, sentence: str):
         """
-        Strip string and change all characters except first to lowecase.
+        Strip string and change all characters except first to lowercase.
         :param sentence:
         :return:
         """
@@ -97,10 +94,6 @@ class Indicator:
             sentence = sentence.replace(old_value, new_value)
 
         return sentence
-
-
-
-
 
 if __name__ == '__main__':
     pass

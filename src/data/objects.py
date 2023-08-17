@@ -2,7 +2,6 @@
 import pandas as pd
 import yaml
 
-
 class ObjectInfo:
     """
     Find rows on xlsx sheet where data about specific region is available.
@@ -54,7 +53,13 @@ class ObjectInfo:
                                     'p': 'р',
                                     'o': 'о',
                                     '4)': '', ' 4)': '',
-                                    '5) ': '', ' 5)': '', '5)': '', ' - ': ' – ', ' -': ' – '}
+                                    '5) ': '', ' 5)': '', '5)': '',
+                                    ' - ': ' – ', ' -': ' – ', '- ': ' – ',
+                                    '- ': '-',
+                                    '6)': '', ' 6)': '', '6) ': '',
+                                    '7)': '', ' 7)': '', '7) ': '',
+                                    '8)': '', ' 8)': '', '8) ': ''
+                                    }
 
                     reg_name = self.process_string(first_column[i], replacements).strip()
 

@@ -36,6 +36,7 @@ class Section:
             print("Parse list ", sheet, ' of file ', self.source)
             data = self.process_sheet(sheet)
             df = pd.concat([df, pd.DataFrame(data)], axis=0)
+
         self.data = df
         return df
 
@@ -63,7 +64,9 @@ class Section:
                   'object_okato': [],
                   'year': [],
                   'indicator_value': [],
-                  'comment': []}
+                  'comment': [],
+                  'subsection': [] # добавляем subsection - здесь под-секции для каждого года в таблицах, где на год приходится несколько столбцов
+                }
 
         df = pd.read_excel(self.source, sheet_name=sheet_name, dtype='string')
 
@@ -82,6 +85,10 @@ class Section:
 
         for key, info in objects.objects.items():
             for year in range(2000, 2022):
+              n_it = len(periods.periods[year]) if year in periods.periods.keys() and type(periods.periods[year]) == list else 1
+              # итерируемся столько раз, сколько подсекций есть на каждый год: если в словаре с годами значения это списки, то длина списка, если нет, то 1
+              # ВАЖНО: в некоторых таблицах у разных годов разное количество подсекций, поэтому n_it считаем для каждого года отдельно
+              for i in range(n_it):
                 result['section'].append(indicator.section)
                 result['indicator_name'].append(indicator.name)
                 result['indicator_unit'].append(indicator.unit)
@@ -93,24 +100,35 @@ class Section:
                 result['year'].append(year)
                 result['comment'].append(comment.comment)
 
+                # если есть несколько годов, то есть под-секция, здесь она добавляется
+                if type(periods.periods[list(periods.periods.keys())[i]]) == list:
+                    result['subsection'].append(df.loc[periods.row +1 , periods.periods[year][i]])
+                else:
+                    result['subsection'].append('No subsection')
+
                 #Handling some unsusual values which can't be save as floats.
                 if year in periods.periods.keys():
+                  # тут если есть под-секция, то тяну значение из под-секции, если нет, то беру значение столбца заданного года
+                  if type(periods.periods[year]) == list:
+                    value = df.loc[info[3], periods.periods[year][i]]
+                  else:
                     value = df.loc[info[3], periods.periods[year]]
-                    if pd.isna(value):
+
+                  if pd.isna(value):
                         value = -99999999
-                    elif self.skip_value(value):
+                  elif self.skip_value(value):
                         value = -88888888
-                    elif ' р.' in value:
+                  elif ' р.' in value:
                         value = round(float(value.replace('в ', '').replace(' р.', '').replace(',', '.').strip())*100, 4)
-                    elif ')' in value:
+                  elif ')' in value:
                         value = re.sub(r'\d[)]', '', str(value.replace(',', '.')))
                         value = -88888888 if self.skip_value(value) else round(float(value), 4)
-                    else:
-                        try:
+                  else:
+                      try:
                             value = round(float(value), 4)
-                        except ValueError:
+                      except ValueError:
                             value = re.sub(r'\s+', '', str(value).replace(',', '.'))
-                            value = round(float(value), 4) if not self.skip_value(value) else -88888888
+                            value = round(float(value), 4) if (not self.skip_value(value)) and (value.isnumeric()) else -88888888
 
                 else:
                     value = -99999999
@@ -120,17 +138,4 @@ class Section:
 
 
 if __name__ == '__main__':
-    PATH_TO_FILE = "D:/coding/regions_parser/data/raw/Pril_Region_Pokaz_2022/Раздел 5 - Здравоохранение.xlsx" # Write here path to xlsx file with data.
-    PATH_TO_DICT = "D:/coding/regions_parser/src/data/regions_etalon.yaml" # Write here path to regions_etalon.yaml file with regions dictionary.
-
-    section = Section(PATH_TO_FILE, PATH_TO_DICT)
-    data = section.process_section()
-    data.to_csv(f"""D:/coding/regions_parser/data/processed/data_5_healthcare.csv""", index=False, sep=";", encoding="utf8")
-
-    print(data.head())
-
-
-
-
-
-
+    pass

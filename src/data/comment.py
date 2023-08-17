@@ -1,6 +1,6 @@
 import pandas as pd
+import yaml
 import re
-
 
 class Comment:
     """Find special footnotes and comments in DataFrame prepared from xlsx sheet."""
@@ -35,24 +35,24 @@ class Comment:
 
             if len(matching_cells) > 0:
 
-                all_equal = all(sublist[1] == 'Unnamed: 0' for sublist in matching_cells.index)
+                all_equal = all((sublist[1] == 'Unnamed: 0') or (sublist[1] == 'Регионы России. Социально-экономические показатели ') for sublist in matching_cells.index)
 
                 if all_equal:
                     """Если все сноски с этим номером в первой колонке, то перечисляем через запятую первые n-1 значений,
                     а дальше через двоеточие добавляем комментарий из под таблицы.
                     """
-                    text = ', '.join([re.sub(r'^[\d.]+', '', self.data.loc[i[0], i[1]].replace(comm, '').strip()) for i in matching_cells.index[:-1]])\
+                    text = ', '.join([re.sub(r'^[\s\d.]+', '', re.sub(r'[\;\,\d\.\)\s]+$', '', self.data.loc[i[0], i[1]].replace(comm, '').strip())) for i in matching_cells.index[:-1]])\
                            + ': ' + self.data.loc[matching_cells.index[-1][0],
                                          matching_cells.index[-1][1]].replace(comm, '').strip()
                 else:
                     """Если все сноски с этим номером из разных колонок, то перечисляем через запятую все значения,
                     которые есть не в первой колонке, а потом через двоеточие добавляем комментарий из под таблицы.
                     """
-                    text = ', '.join([re.sub(r'^[\d.]+', '', self.data.loc[i[0], i[1]].replace(comm, '').strip())
-                                      for i in matching_cells.index if i[1] == 'Unnamed: 0']) + \
+                    text = ', '.join([re.sub(r'^[\s\d.]+', '', re.sub(r'[\;\,\d\.\)\s]+$', '', self.data.loc[i[0], i[1]].replace(comm, '').strip()))
+                                      for i in matching_cells.index if i[1] != 'Unnamed: 0']) + \
                            ': ' + ', '.join([self.data.loc[i[0], i[1]].replace(comm, '').strip()
-                                             for i in matching_cells.index if i[1] != 'Unnamed: 0'])
-                text = ' '.join(text.split())
+                                             for i in matching_cells.index if i[1] == 'Unnamed: 0'])
+                text = re.sub(r'[\,\s]+$', '', ' '.join(text.split()))
 
                 if comment == '':
                     comment = comm + ' ' + text
@@ -66,11 +66,7 @@ class Comment:
         return self.comment
 
     def check_substring(self, cell, number: str):
-        """Checl is data in cell is string and substring with footnote number is in it."""
+        """Check is data in cell is string and substring with footnote number is in it."""
         if isinstance(cell, str) and number in cell:
             return True
         return False
-
-
-if __name__ == '__main__':
-    pass
