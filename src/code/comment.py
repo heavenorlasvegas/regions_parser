@@ -37,8 +37,7 @@ class Comment:
                 comment_columns = [cell[1] for cell in comment_locations[:-1]]
                 comment_cells = [self.clean_comment(self.data.loc[cell], comm_number) for cell in comment_locations[:-1]]
                 comment_text = self.data.loc[comment_locations[-1]].replace(comm_number, '').strip()
-                comment_for_indicator = all([c[0:10].lower() in self.indicator for c in comment_cells])
-                
+                comment_for_indicator = all([c[0:10].lower() in self.indicator for c in comment_cells])  
                                 
                 self.sheet = self.sheet.strip()
                 if self.sheet[-1] == '.':
@@ -80,7 +79,7 @@ class Comment:
                             comments.append({
                                 'comment_for': '–',
                                 'comment_number': comm_num,
-                                'comment_text': self.clean_comment(comment_for, comm_number) + ': ' + comment_text
+                                'comment_text': comment_for + ': ' + comment_text
                             })  
                      
         self.comments = comments                
@@ -89,15 +88,18 @@ class Comment:
     def check_substring(self, cell, number: str):
         """Check is data in cell is string and substring with footnote number is in it."""
         match = number.replace(')', '\)')
-        if isinstance(cell, str) and re.search(f"(?<!\.){match}(?!\.|\s\(|\sО)", cell):
+        if isinstance(cell, str) and re.search(f"(?<!\.){match}(?!\.|\s\(|\sОКВ)", cell):
             return True
         return False
     
     def clean_comment(self, comment, comm_number):
+        comment = comment.replace(comm_number, '').strip()
+        if re.search("^\d+$", comment):
+            return comment
         return re.sub(r'\s+', ' ', 
                       re.sub(r'^[\s\d.]+', '', 
                              re.sub(r'[\;\,\d\.\)\s]+$', '', 
-                                    comment.replace(comm_number, '').strip()
+                                    comment
                                    )
                             )
                      )

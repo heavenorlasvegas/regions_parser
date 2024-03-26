@@ -87,7 +87,7 @@ class Section:
         objects.compare_etalon()
 
         for key, info in objects.objects.items():
-            for year in range(2000, 2022):
+            for year in range(2000, 2023):
               n_it = len(periods.periods[year]) if year in periods.periods.keys() and type(periods.periods[year]) == list else 1
               # итерируемся столько раз, сколько подсекций есть на каждый год: если в словаре с годами значения это списки, то длина списка, если нет, то 1
               # ВАЖНО: в некоторых таблицах у разных годов разное количество подсекций, поэтому n_it считаем для каждого года отдельно

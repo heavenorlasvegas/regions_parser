@@ -26,10 +26,10 @@ class Periods:
             row = None
             for el in index_of_row:
 
-                if not pd.isna(self.data.iloc[el, 1]): # заменила 2 на 1, потому что в таблицах, где на год по одному столбцу 1 тоже заполнен, а в тех, где на год по несколько столбцов, заполнен только 1
-                    if self.data.iloc[el, 1].startswith('2'): #аналогично
+                if not pd.isna(self.data.iloc[el, 1]):
+                    if self.data.iloc[el, 1].startswith('2'):
                         row = el
-                        self.row = row #добавляю атрибут row, чтобы потом удобно было отсылаться к строке с годами (позволяет подтягивать подсекции)
+                        self.row = row
                     else:
                         pass
                 else:
